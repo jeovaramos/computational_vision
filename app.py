@@ -1,4 +1,3 @@
-import cv2
 import requests
 import streamlit as st
 from streamlit_lottie import st_lottie as stl
