@@ -1,128 +1,63 @@
 import cv2
-import time
-import numpy as np
+import requests
+import streamlit as st
+from streamlit_lottie import st_lottie as stl
+from lib.image_detection import ImageDetection
 
-# Load the COCO class names
-with open('models/cfg/coco.names', 'r') as f:
-    class_names = f.read().strip().split('\n')
+st.set_page_config(
+    page_title="Image detection - Jeová Ramos",
+    page_icon=":eye:",
+    layout="centered", )
 
-# Get a different colors for each of the classes
-np.random.seed(42)
-colors = np.random.randint(
-    0, 255,
-    size=(len(class_names), 3))
 
-# Load the DNN model
-model = cv2.dnn.readNet(
-    model='models/yolov4.weights',
-    config='models/cfg/yolov4.cfg')
+def load_lottieurl(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
 
-# Set backend and target to CUDA to use GPU
-model.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-model.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+    return r.json()
 
-# Webcam
-cap = cv2.VideoCapture(0)
 
-threshold = 0.5
-threshold_nms = 0.3
+def header():
+    lottie = load_lottieurl(
+        'https://assets1.lottiefiles.com/private_files/lf30_hybmflns.json')
+    stl(lottie, speed=1, height=200, key="initial")
 
-while cap.isOpened():
-    boxes = []
-    confidences = []
-    class_ids = []
+    return None
 
-    # Read in the image
-    success, image = cap.read()
-    (H, W) = image.shape[:2]
 
-    ln = model.getLayerNames()
-    ln = [ln[ii[0] - 1] for ii in model.getUnconnectedOutLayers()]
+def hello_card():
+    row0_spacer1, row0_1, row0_spacer2, row0_2, row0_spacer3 = st.columns(
+        (.1, 2, .2, 1.5, .1))
 
-    # Create blob from image
-    blob = cv2.dnn.blobFromImage(
-        image,
-        1 / 255.0,
-        size=(416, 416),
-        # mean=(104, 117, 123),
-        swapRB=True,
-        crop=False
-    )
+    row0_1.title('Analytics dashboard')
+    with row0_2:
+        st.write('')
 
-    # start time to calculate FPS
-    start = time.time()
+    row0_2.subheader(
+        'A Web App by [Jeová Ramos](https://github.com/jeovaramos)')
 
-    # Set input to the model
-    model.setInput(blob)
+    row1_spacer1, row1_1, row1_spacer2 = st.columns((.1, 3.2, .1))
 
-    # Make forward pass in model
-    layer_outputs = model.forward(ln)
+    with row1_1:
+        st.write(
+            "Hey there! Welcome to my first Computational vision project. "
+            "I am looking for build my data science portfolio, "
+            "so I made this with studie intentions. "
+            "I'm using **Open CV and YOLO v4** tiny model to identify objects."
+            " The tiny version is way more light, faster and enought for this "
+            "project propurse.")
+        st.write(
+            "If you want to keep in touch or just see other things "
+            "I'm working in, please consider click in the link above "
+            "with my name on it.")
+        st.write(
+            "**I hope you enjoy it.** Best regards,\n Jeová Ramos.")
 
-    # End time
-    end = time.time()
+    return None
 
-    # calculate the FPS for current frame detection
-    fps = 1 / (end-start)
 
-    # Run over each of the detections
-    for output in layer_outputs:
-        for detection in output:
-            scores = detection[5:]
-            class_id = np.argmax(scores)
-            confidence = scores[class_id]
-
-            if confidence > threshold:
-                box = detection[0:4] * np.array([W, H, W, H])
-                (centerX, centerY, width, height) = box.astype('int')
-                x = int(centerX - (width / 2))
-                y = int(centerY - (height / 2))
-
-                boxes.append([x, y, int(width), int(height)])
-                confidences.append(float(confidence))
-                class_ids.append(class_id)
-
-    # Non-maximum suppression
-    objects = cv2.dnn.NMSBoxes(
-        boxes,
-        confidences,
-        threshold,
-        threshold_nms
-    )
-
-    # Draw bounding boxes
-    if len(objects) > 0:
-        for ii in objects.flatten():
-            (x, y) = (boxes[ii][0], boxes[ii][1])
-            (w, h) = (boxes[ii][2], boxes[ii][3])
-            color = [int(c) for c in colors[class_ids[ii]]]
-
-            cv2.rectangle(image, (x, y), (x+w, y+h), color, 2)
-            text = f'{class_names[class_ids[ii]]}: {confidences[ii]:.2f}'
-
-            cv2.putText(
-                image,
-                text,
-                (x, y-5),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                color,
-                2
-            )
-
-    # Show FPS
-    cv2.putText(
-        image,
-        f"{fps:.2f} FPS", (20, 30),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        1,
-        (0, 255, 0),
-        2
-    )
-
-    cv2.imshow('image', image)
-
-    if cv2.waitKey(10) & 0xFF == ord('q'):
-        break
-
-cap.release()
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    header()
+    hello_card()
+    ImageDetection().main()
