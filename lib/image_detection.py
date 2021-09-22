@@ -69,7 +69,7 @@ class ImageDetection:
 
     def webcam_image(self, cap: cv2.VideoCapture):
         image = cap.read()[1]
-        # image = self.reshape_image(image)
+        image = self.reshape_image(image)
 
         return image, image.shape[:2]
 
