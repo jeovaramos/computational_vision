@@ -2,8 +2,6 @@ import cv2
 import time
 import mediapipe as mp
 
-cap = cv2.VideoCapture(0)
-
 
 class HandDetector:
     def __init__(
@@ -55,6 +53,8 @@ class HandDetector:
 def main():
 
     detector = HandDetector()
+    cap = cv2.VideoCapture(0)
+
     while cap.isOpened():
         start = time.time()
 
