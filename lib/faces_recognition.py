@@ -12,7 +12,7 @@ class FacesRecognition:
 
         self._default_encodings = [
             "images/jeova.jpg",
-            "images/carina.jpg"
+            "images/carina.jpeg"
         ]
 
         self._default_names = [
@@ -25,11 +25,14 @@ class FacesRecognition:
 
         return None
 
-    def add_face_encoders(self, file, name):
+    def add_face_encoders(self, file, name, folder=True):
 
-        img = Image.open(file)
-        face_encoding = face_recognition.face_encodings(
-            np.asarray(img))[0]
+        if folder:
+            img = face_recognition.load_image_file(file)
+        else:
+            img = np.asarray(Image.open(file))
+
+        face_encoding = face_recognition.face_encodings(img)[0]
         self.known_encodings.append(face_encoding)
         self.known_names.append(name)
 
@@ -38,7 +41,7 @@ class FacesRecognition:
     def _quarter_size(self, img):
         return cv2.resize(img, (0, 0), fx=.25, fy=.25)
 
-    def _scale_back(location):
+    def _scale_back(self, location):
         (top, right, bottom, left) = location
         top *= 4
         right *= 4
@@ -60,9 +63,9 @@ class FacesRecognition:
         return face_recognition.compare_faces(
             self.known_encodings, face_encoding)
 
-    def _closiest_face(self, face_encodings):
+    def _closiest_face(self, face_encoding):
         distances = face_recognition.face_distance(
-            self.known_encodings, face_encodings)
+            self.known_encodings, face_encoding)
 
         return np.argmin(distances)
 
@@ -70,9 +73,9 @@ class FacesRecognition:
         locations, encodings = self._locations_encodings(img)
 
         names = []
-        for face_encoding in encodings:
-            matches = self._match_face(face_encoding)
-            closiest = self._closiest_face(encodings)
+        for encoding in encodings:
+            matches = self._match_face(encoding)
+            closiest = self._closiest_face(encoding)
 
             if matches[closiest]:
                 name = self.known_names[closiest]
